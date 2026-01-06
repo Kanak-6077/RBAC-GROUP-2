@@ -1,0 +1,5 @@
+fastapi
+streamlit
+langchain
+sentence-transformers
+pandas
