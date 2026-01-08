@@ -18,16 +18,16 @@ Configure the development environment, clone the GitHub repository, explore comp
 Set up Python virtual environment
 
 Installed dependencies:
-FastAPI
-Streamlit
-LangChain
-sentence-transformers
-pandas
+-FastAPI
+-Streamlit
+-LangChain
+-sentence-transformers
+-pandas
 
-Cloned GitHub repository containing RAG documents and starter code
-Explored all Markdown and CSV documents
-Analyzed document structure and content
-Created role-to-document access mapping
+-Cloned GitHub repository containing RAG documents and starter code
+-Explored all Markdown and CSV documents
+-Analyzed document structure and content
+-Created role-to-document access mapping
 
 
 📆 Module 2: Document Preprocessing & Metadata Tagging (Week 2)
@@ -39,20 +39,20 @@ Parse, clean, chunk documents, and attach role-based metadata for vector databas
 Parsed Markdown and CSV documents
 
 Extracted:
-Titles
-Sections
-Main content
+-Titles
+-Sections
+-Main content
 
 Cleaned text:
-Normalized whitespace
-Removed special characters
-Fixed encoding issues
-Chunked documents into 300–512 token segments
+-Normalized whitespace
+-Removed special characters
+-Fixed encoding issues
+-Chunked documents into 300–512 token segments
 
 Assigned metadata:
-Source document
-Department
-Accessible roles
-Created role-based metadata mapping
+-Source document
+-Department
+-Accessible roles
+-Created role-based metadata mapping
 
 
