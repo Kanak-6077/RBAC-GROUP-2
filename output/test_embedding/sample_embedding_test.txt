@@ -1,0 +1,2 @@
+Sample embedding test output.
+Embedding vector length: 384
