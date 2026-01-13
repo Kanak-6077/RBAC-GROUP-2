@@ -23,7 +23,7 @@ def main():
     print("Embedding vector length:", len(embedding))
 
     # Save proof output
-    with open("output/tests-embedding/sample_embedding_test.txt", "w") as f:
+    with open("output/test_embedding/sample_embedding_test.txt", "w") as f:
         f.write("Sample chunk:\n")
         f.write(sample_chunk[:300] + "\n\n")
         f.write(f"Embedding vector length: {len(embedding)}\n")
