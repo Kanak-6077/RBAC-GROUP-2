@@ -3,7 +3,7 @@ import json
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-INPUT_CSV = "output/chunks.csv"
+INPUT_CSV = "output/metadata.csv"
 OUTPUT_DIR = "output/embeddings"
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "embeddings.json")
 
