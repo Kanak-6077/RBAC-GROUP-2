@@ -1,4 +1,4 @@
 Sample chunk:
-This is a sample chunk used to test embedding generation.
+Employee Handbook
 
 Embedding vector length: 384
