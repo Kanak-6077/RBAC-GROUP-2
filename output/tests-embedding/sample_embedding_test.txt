@@ -1,0 +1,4 @@
+Sample chunk:
+This is a sample chunk used to test embedding generation.
+
+Embedding vector length: 384
