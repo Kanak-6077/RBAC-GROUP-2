@@ -1,5 +1,0 @@
-Sample chunk:
-
-Employee Handbook
-
-Embedding vector length: 384
