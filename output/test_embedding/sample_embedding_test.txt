@@ -1,0 +1,4 @@
+Sample chunk (first 300 chars):
+# Employee Handbook ## Table of Contents 1. [Welcome & Introduction](#welcome--introduction) 2. [Employee Onboarding & Benefits](#employee-onboarding--benefits) 3. [Leave Policies](#leave-policies) 4. [Work Hours & Attendance](#work-hours--attendance) 5. [Code of Conduct & Workplace Behavior](#code-
+
+Embedding vector length: 384
