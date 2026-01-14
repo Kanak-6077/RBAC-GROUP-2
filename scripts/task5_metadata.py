@@ -16,11 +16,11 @@ def build_metadata(chunks_csv: str, out_dir: str):
     os.makedirs(out_dir, exist_ok=True)
     df = pd.read_csv(chunks_csv, dtype=str).fillna("")
 
-    # Compute accessible roles directly from the 'role' column
-    df["accessible_roles"] = df["role"].apply(lambda r: ",".join(accessible_roles(r)))
+    # Compute allowed roles directly from the 'role' column
+    df["allowed_roles"] = df["role"].apply(lambda r: ",".join(accessible_roles(r)))
 
-    
-    meta = df[["chunk_id","doc_id","filename","title","role","accessible_roles"]]
+    # Select metadata columns including 'text'
+    meta = df[["chunk_id","doc_id","filename","title","role","allowed_roles","text"]]
     meta = meta.sort_values(by=["role","doc_id","chunk_id"])
 
     out_path = os.path.join(out_dir, "metadata.csv")
