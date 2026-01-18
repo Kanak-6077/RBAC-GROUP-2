@@ -26,19 +26,8 @@ output/*.log
 # Vector database (Chroma)
 output/vector_db/
 output/vector_db/chroma/
-
-# Generated embeddings
-output/embeddings/
-
-# Environment files
-.env
-.env.*
-
-# Python cache
-__pycache__/
-*.pyc
-
 # Virtual environment
 venv/
 .envvenv/
+
 
