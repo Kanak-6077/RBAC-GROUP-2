@@ -1,24 +1,7 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.egg-info/
+# -----------------------------
+# Vector Database (Chroma)
+# -----------------------------
+output/vector_db/
+output/vector_db/chroma/
 
-# Virtual envs
-venv/
-.env/
-.venv/
-env/
-
-# Editors/OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Local output you DON'T want (keep only specific files via staging)
-output/*.log
+# -----------------------------
