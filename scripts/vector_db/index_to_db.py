@@ -17,12 +17,8 @@ def load_embeddings(file_path: str) -> list:
 
 
 def init_chroma_client():
-    return chromadb.Client(
-        Settings(
-            persist_directory=CHROMA_PATH,
-            anonymized_telemetry=False
-        )
-    )
+    
+    return chromadb.PersistentClient(path=CHROMA_PATH)
 
 
 def index_to_vector_db():
@@ -40,14 +36,12 @@ def index_to_vector_db():
                 "chunk_id": e["chunk_id"],
                 "document_name": e["document_name"],
                 "department": e["department"],
-                "allowed_roles": ",".join(e["allowed_roles"])  # FIX
+                "allowed_roles": ",".join(e["allowed_roles"])  
             }
             for e in embeddings
         ]
     )
-
     print(f"Indexed {collection.count()} embeddings into Chroma DB")
-
 
 if __name__ == "__main__":
     index_to_vector_db()
