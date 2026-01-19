@@ -43,3 +43,5 @@ output/vector_db/chroma/
 # Environment variables
 # ===============================
 .env
+
+users.db
