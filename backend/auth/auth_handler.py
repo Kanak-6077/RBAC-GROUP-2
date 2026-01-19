@@ -1,14 +1,12 @@
 import sqlite3
 from datetime import datetime, timedelta
-
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
 
-# Password hashing (bcrypt)
+# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT configuration
+# JWT config
 SECRET_KEY = "CHANGE_THIS_SECRET_KEY"
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 30
@@ -28,7 +26,14 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def authenticate_user(username: str, password: str):
+def decode_access_token(token: str) -> dict | None:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
+
+def authenticate_user(username: str, password: str) -> dict | None:
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
 
@@ -37,13 +42,13 @@ def authenticate_user(username: str, password: str):
         (username,)
     )
 
-    user = cursor.fetchone()
+    row = cursor.fetchone()
     conn.close()
 
-    if not user:
+    if not row:
         return None
 
-    db_username, db_password, role, department = user
+    db_username, db_password, role, department = row
 
     if not verify_password(password, db_password):
         return None
@@ -55,14 +60,11 @@ def authenticate_user(username: str, password: str):
     }
 
 
-def login(username: str, password: str) -> dict:
+def login(username: str, password: str) -> dict | None:
     user = authenticate_user(username, password)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
-        )
+        return None
 
     token_payload = {
         "sub": user["username"],
