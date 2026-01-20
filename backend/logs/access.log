@@ -1,0 +1,9 @@
+=== ACCESS LOG STARTED ===
+2026-01-20 14:31:59 | User: Ritika | Role: C-Level | Query: Financial report | Status: ALLOWED
+2026-01-20 14:31:59 | User: Rahul | Role: HR | Query: Finance salaries | Status: DENIED
+2026-01-20 14:31:59 | User: Anita | Role: Engineering | Query: System design | Status: ALLOWED
+2026-01-20 14:31:59 | User: Karan | Role: Marketing | Query: HR policies | Status: DENIED
+2026-01-20 14:34:24 | User: Ritika | Role: C-Level | Query: Financial report | Status: ALLOWED
+2026-01-20 14:34:24 | User: Rahul | Role: HR | Query: Finance salaries | Status: DENIED
+2026-01-20 14:34:24 | User: Anita | Role: Engineering | Query: System design | Status: ALLOWED
+2026-01-20 14:34:24 | User: Karan | Role: Marketing | Query: HR policies | Status: DENIED
