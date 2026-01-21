@@ -12,7 +12,9 @@ def create_user_table():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
-            role TEXT
+            password TEXT,
+            role TEXT,
+            department TEXT
         )
     """)
     conn.commit()

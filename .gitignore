@@ -1,24 +1,47 @@
-# Python
+# ===============================
+# Python bytecode & cache
+# ===============================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.egg-info/
 
-# Virtual envs
+# ===============================
+# Virtual environments
+# ===============================
 venv/
 .env/
 .venv/
 env/
 
-# Editors/OS
+# ===============================
+# Editors / OS files
+# ===============================
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# Jupyter
+# ===============================
+# Jupyter Notebook
+# ===============================
 .ipynb_checkpoints/
 
-# Local output you DON'T want (keep only specific files via staging)
+# ===============================
+# Logs & local outputs
+# ===============================
 output/*.log
+
+# ===============================
+# Vector Databases (ChromaDB)
+# ===============================
+output/vector_db/
+output/vector_db/chroma/
+
+# ===============================
+# Environment variables
+# ===============================
+.env
+
+users.db

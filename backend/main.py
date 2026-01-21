@@ -1,60 +1,46 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from backend.models import User
 from backend.database import get_connection, create_user_table
 from fastapi import Depends
 from backend.auth.auth import get_current_user
+from backend.auth.login import router as login_router
+from backend.auth.auth_handler import hash_password
 
-app = FastAPI(title="RBAC Backend - Milestone 3 Task 1")
-
+app = FastAPI(title="RBAC Backend")
+app.include_router(login_router)
 create_user_table()
-
-@app.get("/")
-def root():
-    return {"message": "Backend running successfully"}
 
 @app.post("/users")
 def create_user(user: User):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO users (username, role) VALUES (?, ?)",
-        (user.username, user.role)
-    )
-    conn.commit()
-    conn.close()
-    return {"status": "User created"}
 
-@app.get("/users")
-def list_users():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, username, role FROM users")
-    users = cursor.fetchall()
-    conn.close()
-    return users
+    # Check password byte length (bcrypt limit is 72 bytes)
+    try:
+        if len(user.password.encode("utf-8")) > 72:
+            raise HTTPException(status_code=400, detail="Password too long for encryption")
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid password encoding")
 
-@app.post("/login")
-def login(username: str):
-    """
-    Dummy login endpoint for Milestone 4 Task 1
-    """
+    # Hash the password
+    try:
+        password_to_save = hash_password(user.password)
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail="Password hashing failed")
 
-    if username == "admin":
-        return {"token": "admin-token"}
+    # Insert user into database
+    try:
+        cursor.execute(
+            "INSERT OR REPLACE INTO users (username, password, role, department) VALUES (?, ?, ?, ?)",
+            (user.username, password_to_save, user.role, user.department)
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail="Database insert failed")
+    finally:
+        conn.close()
 
-    if username == "employee":
-        return {"token": "employee-token"}
-
-    if username == "manager":
-        return {"token": "manager-token"}
-
-    return {"token": "invalid-token"}
-
-
-@app.get("/secure")
-def secure_endpoint(user=Depends(get_current_user)):
-    return {
-        "message": "Access granted",
-        "role": user["role"]
-    }
-
+    return {"status": "User created successfully"}
