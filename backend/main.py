@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from backend.models import User
 from backend.database import get_connection, create_user_table
+from fastapi import Depends
+from backend.auth.auth import get_current_user
 from backend.auth.login import router as login_router
 from backend.auth.auth_handler import hash_password
 
