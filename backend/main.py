@@ -6,6 +6,10 @@ from backend.auth.auth import get_current_user
 from backend.auth.login import router as login_router
 from backend.auth.auth_handler import hash_password
 
+from fastapi.middleware.cors import CORSMiddleware
+from backend.rbac.middleware import enforce_rbac
+from backend.rag.pipeline import run_rag_pipeline
+
 app = FastAPI(title="RBAC Backend")
 app.include_router(login_router)
 create_user_table()
@@ -44,3 +48,24 @@ def create_user(user: User):
         conn.close()
 
     return {"status": "User created successfully"}
+
+
+@app.post("/chat")
+async def chat(query: dict, request=Depends(get_current_user)):
+    
+    user = request
+    question = query.get("question")
+
+    if not question:
+        raise HTTPException(status_code=400, detail="Question is required")
+
+    # Enforce RBAC
+    await enforce_rbac(
+        request=request,
+        action="Chat Query",
+        dept_requested=user["department"]
+    )
+
+    response = run_rag_pipeline(user, question, search_results=[])
+
+    return response
