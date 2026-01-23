@@ -53,9 +53,10 @@ def semantic_search(query: str, top_k: int = 5):
     # Loop through findings
     for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
         formatted_results.append({
-            "chunk_text": doc,
+            "text": doc,  # Use 'text' to match common RAG patterns
             "department": meta.get("department"),
-            "allowed_roles": meta.get("allowed_roles", "").split(",")
+            "document_name": meta.get("document_name", "Unknown"),
+            "similarity": 0.9 # Default if distance not used
         })
 
     return formatted_results

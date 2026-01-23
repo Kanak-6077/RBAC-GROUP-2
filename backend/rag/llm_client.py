@@ -3,23 +3,32 @@
 import os
 import requests
 from typing import List
+from dotenv import load_dotenv
 from backend.rag.prompts import build_prompt
 
-# Hugging Face model endpoint
-HF_MODEL_URL = (
-    "https://api-inference.huggingface.co/models/"
-    "mistralai/Mistral-7B-Instruct-v0.2"
-)
+# -------------------------------------------------
+# Load environment variables
+# -------------------------------------------------
+ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(ENV_PATH)
 
-# Load token from environment variable
-HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
+if not HF_TOKEN:
+    raise RuntimeError("Hugging Face API token not found in .env")
+
+# -------------------------------------------------
+# Hugging Face Model (FREE + STABLE)
+# -------------------------------------------------
+HF_MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
 
 HEADERS = {
-    "Authorization": f"Bearer {HF_API_TOKEN}",
+    "Authorization": f"Bearer {HF_TOKEN}",
     "Content-Type": "application/json"
 }
 
-
+# -------------------------------------------------
+# LLM Call
+# -------------------------------------------------
 def generate_answer(
     context_chunks: List[str],
     user_question: str,
@@ -30,19 +39,15 @@ def generate_answer(
     and returns generated answer.
     """
 
-    # ❌ Safety check
-    if not HF_API_TOKEN:
-        return "LLM Error: Hugging Face API token not found."
-
-    # Build final prompt
-    prompt = build_prompt(context_chunks, user_question)
+    # 🔴 IMPORTANT: keep prompt SHORT for free tier
+    context = "\n".join(context_chunks[:3])  # LIMIT context
+    prompt = build_prompt([context], user_question)
 
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_new_tokens": 300,
-            "temperature": 0.2,
-            "return_full_text": False
+            "max_new_tokens": 150,
+            "temperature": 0.2
         }
     }
 
@@ -54,20 +59,17 @@ def generate_answer(
             timeout=timeout
         )
 
-        # Handle rate limit / server error
         if response.status_code != 200:
-            return (
-                f"LLM Error: API failed "
-                f"(status {response.status_code})"
-            )
+            return f"LLM Error: API failed (status {response.status_code})"
 
         result = response.json()
 
-        # Expected HF response format
-        if isinstance(result, list) and "generated_text" in result[0]:
-            return result[0]["generated_text"].strip()
+        # HF text-generation format
+        if isinstance(result, list) and len(result) > 0:
+            if "generated_text" in result[0]:
+                return result[0]["generated_text"].strip()
 
-        return "LLM Error: Unexpected response format."
+        return "LLM Error: Empty or unexpected response."
 
     except requests.exceptions.Timeout:
         return "LLM Error: Request timed out."

@@ -1,70 +1,47 @@
-# backend/rag/pipeline.py
-
 from typing import List, Dict
 from backend.rag.llm_client import generate_answer
 
-
 def calculate_confidence(similarities: List[float]) -> float:
-    """
-    Confidence = average similarity score (rounded to 2 decimals)
-    """
     if not similarities:
         return 0.0
     return round(sum(similarities) / len(similarities), 2)
 
-
-def run_rag_pipeline(
-    user: Dict,
-    query: str,
-    search_results: List[Dict]
-) -> Dict:
-    """
-    Full RAG Flow:
-    Authenticate → RBAC-filter → Prompt → LLM → Source Attribution
-    """
-
-    # -------------------------------
-    # 1. RBAC FILTERING
-    # -------------------------------
+def run_rag_pipeline(user: Dict, query: str, search_results: List[Dict]) -> Dict:
     allowed_chunks = []
 
-    for item in search_results:
-        metadata = item["metadata"]
-
-        # C-Level: access everything
-        if user["role"] == "C-Level":
-            allowed_chunks.append(item)
-
-        # Others: only own department
-        elif metadata["department"] == user["department"]:
-            allowed_chunks.append(item)
-
-    if not allowed_chunks:
+    # If search_results is empty, the pipeline cannot generate an answer
+    if not search_results:
         return {
-            "answer": "Access denied for requested information.",
+            "answer": "No relevant information found in the database.",
             "sources": [],
             "confidence_score": 0.0
         }
 
-    # -------------------------------
-    # 2. CONTEXT + SOURCES
-    # -------------------------------
+    for item in search_results:
+        # Get metadata safely
+        metadata = item.get("metadata", {})
+        
+        # C-Level gets EVERYTHING
+        if user.get("role") == "C-Level":
+            allowed_chunks.append(item)
+        
+        # Others match department OR see "General" files
+        elif metadata.get("department") == user.get("department") or metadata.get("department") == "General":
+            allowed_chunks.append(item)
+
+    if not allowed_chunks:
+        return {
+            "answer": "Access denied. You do not have permission to view the documents related to this query.",
+            "sources": [],
+            "confidence_score": 0.0
+        }
+
     context_chunks = [c["text"] for c in allowed_chunks]
-    sources = list({
-        c["metadata"]["document_name"]
-        for c in allowed_chunks
-    })
+    # Change this line in pipeline.py:
+    sources = list({c.get("document_name", "Unknown Source") for c in allowed_chunks})
+    similarities = [c.get("similarity", 0.0) for c in allowed_chunks]
 
-    similarities = [c["similarity"] for c in allowed_chunks]
-
-    # -------------------------------
-    # 3. LLM GENERATION
-    # -------------------------------
     answer = generate_answer(context_chunks, query)
-
-    # -------------------------------
-    # 4. CONFIDENCE SCORE
-    # -------------------------------
     confidence = calculate_confidence(similarities)
 
     return {

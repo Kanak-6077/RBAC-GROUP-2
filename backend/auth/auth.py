@@ -1,27 +1,18 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from backend.auth.auth_handler import decode_access_token # This uses your real decoder
 
 security = HTTPBearer()
 
-# Fake token store (for Task 1 only)
-FAKE_TOKENS = {
-    "admin-token": "Admin",
-    "employee-token": "Employee",
-    "manager-token": "Manager"
-}
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
+    payload = decode_access_token(token)
 
-    if token not in FAKE_TOKENS:
+    if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing token"
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-
-    return {
-        "role": FAKE_TOKENS[token],
-        "token": token
-    }
+    # This payload now contains 'sub', 'role', and 'department'
+    return payload
