@@ -45,3 +45,5 @@ output/vector_db/chroma/
 .env
 
 users.db
+data/
+scripts/preprocessing/
