@@ -1,18 +1,16 @@
-# backend/auth/login.py
-from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter
+from pydantic import BaseModel
+
 from backend.auth.auth_handler import login
 
 router = APIRouter()
 
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 @router.post("/login")
-def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    result = login(form_data.username, form_data.password)
-
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
-        )
-
-    return result
+def login_user(credentials: LoginRequest):
+    return login(credentials.username, credentials.password)
