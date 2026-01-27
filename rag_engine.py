@@ -55,7 +55,8 @@ def run_rag_engine(query: str, retrieved_chunks: List):
     response = {
         "answer": final_answer,
         "sources": sources,
-        "confidence": compute_confidence(sources)
+        "confidence_score": compute_confidence(sources)
     }
 
     return response
+
