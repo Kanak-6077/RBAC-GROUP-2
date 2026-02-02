@@ -12,19 +12,15 @@ def test_rag_pipeline():
 
     search_results = [
         {
-            "text": "The company revenue grew by 15% in Q3.",
-            "metadata": {
-                "document_name": "Finance_Report_Q3.pdf",
-                "department": "Finance"
-            },
+            "chunk_text": "The company revenue grew by 15% in Q3.",
+            "document_name": "Finance_Report_Q3.pdf",
+            "department": "Finance",
             "similarity": 0.89
         },
         {
-            "text": "Marketing expenses increased in Q3.",
-            "metadata": {
-                "document_name": "Marketing_Report_Q3.pdf",
-                "department": "Marketing"
-            },
+            "chunk_text": "Marketing expenses increased in Q3.",
+            "document_name": "Marketing_Report_Q3.pdf",
+            "department": "Marketing",
             "similarity": 0.72
         }
     ]

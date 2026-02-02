@@ -11,13 +11,13 @@ def create_admin():
 
     # Step 2: Insert the admin
     cursor.execute("""
-    INSERT OR IGNORE INTO users (username, password, role, department)
+    INSERT OR REPLACE INTO users (username, password, role, department)
     VALUES (?, ?, ?, ?)
     """, (
         "admin",
         hash_password("admin123"),
-        "C-Level",  
-        "Executive" 
+        "admin",
+        "C level"
     ))
 
     conn.commit()

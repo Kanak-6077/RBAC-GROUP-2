@@ -3,7 +3,7 @@ import jwt
 from datetime import datetime
 from fastapi import Request, HTTPException, status
 
-SECRET_KEY = "supersecretkey"
+SECRET_KEY = "ce3mc4ejwrn4vi534932c42394"
 ALGORITHM = "HS256"
 
 LOG_DIR = "backend/logs"

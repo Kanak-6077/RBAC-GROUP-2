@@ -12,9 +12,8 @@ from backend.auth.login import router as login_router
 from scripts.search.semantic_search import semantic_search
 
 # Load environment variables
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
-
+env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(dotenv_path=env_path)
 class ChatRequest(BaseModel):
     query: str
 
@@ -52,20 +51,18 @@ def ensure_test_user():
         ("admin",),
     )
 
-    if not cursor.fetchone():
-        cursor.execute(
-            """
-            INSERT INTO users (username, password, role, department)
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                "admin",
-                hash_password("admin123"),
-                "C-Level",
-                "General",
-            ),
-        )
-        conn.commit()
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO users (username, password, role, department)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            "admin",
+            hash_password("admin123"),
+            "C-Level",
+            "General",
+        ),
+    )
 
     conn.close()
 
@@ -119,10 +116,15 @@ def get_users(current_user=Depends(get_current_user)):
 
 @app.post("/chat")
 async def chat(request: ChatRequest, current_user=Depends(get_current_user)):
-    if not os.getenv("HUGGINGFACE_API_TOKEN"):
+    # Check for at least one LLM provider
+    hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
+    groq_key = os.getenv("GROQ_API_KEY")
+    use_ollama = os.getenv("USE_OLLAMA", "false").lower() == "true"
+    
+    if not hf_token and not groq_key and not use_ollama:
         raise HTTPException(
             status_code=500,
-            detail="Hugging Face API token not configured",
+            detail="No LLM configured. Set USE_OLLAMA=true, GROQ_API_KEY, or HUGGINGFACE_API_TOKEN in .env",
         )
 
     try:

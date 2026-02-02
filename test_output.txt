@@ -1,0 +1,8 @@
+1. ChromaDB imported
+2. Client created
+3. Collection obtained
+4. Count: 38
+5. Sample retrieved
+6. IDs: ['employee_handbook_001']
+7. Metadatas: [{'chunk_id': 'employee_handbook_001', 'document_name': 'employee_handbook.md', 'allowed_roles': 'Employees,C-Level', 'department': 'Employees'}]
+8. Documents: ['# Employee Handbook ## Table of Contents 1. [Welco']

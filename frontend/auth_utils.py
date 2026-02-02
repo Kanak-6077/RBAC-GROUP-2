@@ -10,5 +10,8 @@ def is_authenticated():
     return "token" in st.session_state
 
 def logout():
-    if "token" in st.session_state:
-        del st.session_state["token"]
+    # Clear all session state items for a fresh login
+    keys_to_clear = ["token", "messages", "user_info"]
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
