@@ -1,60 +1,41 @@
 # backend/rag/llm_client.py
 
-import os
 import requests
 from typing import List
-from dotenv import load_dotenv
 from backend.rag.prompts import build_prompt
 
 # -------------------------------------------------
-# Load environment variables
+# Ollama Configuration
 # -------------------------------------------------
-ENV_PATH = os.path.join(os.path.dirname(__file__), "..", ".env")
-load_dotenv(ENV_PATH)
-
-HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-if not HF_TOKEN:
-    raise RuntimeError("Hugging Face API token not found in .env")
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "llama3"   # you already pulled this
 
 # -------------------------------------------------
-# Hugging Face Model (FREE + STABLE)
-# -------------------------------------------------
-HF_MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
-
-HEADERS = {
-    "Authorization": f"Bearer {HF_TOKEN}",
-    "Content-Type": "application/json"
-}
-
-# -------------------------------------------------
-# LLM Call
+# LLM Call (Ollama)
 # -------------------------------------------------
 def generate_answer(
     context_chunks: List[str],
     user_question: str,
-    timeout: int = 30
+    timeout: int = 120
 ) -> str:
     """
-    Sends context + question to Hugging Face LLM
+    Sends context + question to Ollama LLM
     and returns generated answer.
     """
 
-    # 🔴 IMPORTANT: keep prompt SHORT for free tier
-    context = "\n".join(context_chunks[:3])  # LIMIT context
+    # Keep context short (good practice)
+    context = "\n".join(context_chunks[:3])
     prompt = build_prompt([context], user_question)
 
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 150,
-            "temperature": 0.2
-        }
+        "model": OLLAMA_MODEL,
+        "prompt": prompt,
+        "stream": False
     }
 
     try:
         response = requests.post(
-            HF_MODEL_URL,
-            headers=HEADERS,
+            OLLAMA_URL,
             json=payload,
             timeout=timeout
         )
@@ -64,12 +45,7 @@ def generate_answer(
 
         result = response.json()
 
-        # HF text-generation format
-        if isinstance(result, list) and len(result) > 0:
-            if "generated_text" in result[0]:
-                return result[0]["generated_text"].strip()
-
-        return "LLM Error: Empty or unexpected response."
+        return result.get("response", "").strip() or "LLM Error: Empty response."
 
     except requests.exceptions.Timeout:
         return "LLM Error: Request timed out."
