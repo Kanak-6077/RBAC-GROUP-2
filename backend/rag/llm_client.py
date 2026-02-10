@@ -3,26 +3,17 @@ import requests
 from typing import List
 from dotenv import load_dotenv
 
-# -------------------------------------------------
-# 1. Load Environment Variables
-# -------------------------------------------------
-# Navigate up two levels from /backend/rag to root
+# Load Environment Variables
 ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-print(f"DEBUG: Loading .env from: {ENV_PATH}")
-print(f"DEBUG: File exists: {os.path.exists(ENV_PATH)}")
 load_dotenv(ENV_PATH)
 
-# Ollama settings (only LLM now)
+# Ollama settings (loaded from .env with defaults)
 USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
 
-print(f"DEBUG: USE_OLLAMA: {USE_OLLAMA}")
-print(f"DEBUG: OLLAMA_URL: {OLLAMA_URL}")
-print(f"DEBUG: OLLAMA_MODEL: {OLLAMA_MODEL}")
-
 # -------------------------------------------------
-# 2. LLM Generation Function - Ollama Only
+# LLM Generation Function - Ollama Only
 # -------------------------------------------------
 def generate_answer(
     context_chunks: List[str],

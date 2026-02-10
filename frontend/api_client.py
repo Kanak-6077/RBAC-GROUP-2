@@ -6,7 +6,8 @@ API_BASE_URL = "http://127.0.0.1:8000"
 def login(username, password):
     response = requests.post(
         f"{API_BASE_URL}/login",
-        json={"username": username, "password": password}
+        json={"username": username, "password": password},
+        timeout=10
     )
     response.raise_for_status()
     return response.json()
@@ -36,7 +37,8 @@ def send_chat_query(query_text):
         response = requests.post(
             f"{API_BASE_URL}/chat",
             json={"query": query_text},
-            headers=headers
+            headers=headers,
+            timeout=30
         )
         if response.status_code == 200:
             return response.json()

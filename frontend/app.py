@@ -1,13 +1,13 @@
+from fastapi.params import Depends
 import streamlit as st
 import requests
 from api_client import login
-from auth_utils import save_token, is_authenticated, get_token, logout
+from auth_utils import save_token, is_authenticated, get_token, logout, is_admin_or_clevel
 from jose import jwt
-import time
-
+from user_admin import create_user, get_all_users
 # Configure page with custom theme
 st.set_page_config(
-    page_title="Clara - Company AI Assistant",
+    page_title="Company AI Assistant",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -100,30 +100,39 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Backend URL
-BACKEND_URL = "http://localhost:8000"
+# Backend URL - standardized to match api_client.py
+BACKEND_URL = "http://127.0.0.1:8000"
+
 
 def get_user_info():
-    """Decode JWT token to get user info"""
     token = get_token()
-    if token:
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
-            return {
-                "username": payload.get("sub", "User"),
-                "role": payload.get("role", "Unknown"),
-                "department": payload.get("department", "Unknown")
-            }
-        except Exception as e:
-            return {"username": "User", "role": "Unknown", "department": "Unknown"}
-    return {"username": "User", "role": "Unknown", "department": "Unknown"}
+
+    if not token:
+        return {"username": "User", "role": "Unknown", "department": "Unknown"}
+
+    try:
+        payload = jwt.get_unverified_claims(token)
+
+        return {
+            "username": payload.get("sub", "User"),
+            "role": payload.get("role", "Unknown"),
+            "department": payload.get("department", "Unknown"),
+        }
+
+    except Exception as e:
+        print("JWT decode error:", e)
+        return {"username": "User", "role": "Unknown", "department": "Unknown"}
+
+def is_admin_or_clevel(user_info):
+    return user_info.get("role") in ["admin", "c_level"]
+
 
 def render_login_page():
     """Render a beautiful login page"""
     st.markdown("""
     <div class="login-container">
         <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
-        <h1 class="gradient-title">Clara - Company AI Assistant</h1>
+        <h1 class="gradient-title">Company AI Assistant</h1>
         <p style="color: #94a3b8; margin-bottom: 2rem;">Your Enterprise Knowledge Companion</p>
     </div>
     <br>
@@ -132,9 +141,8 @@ def render_login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.container():
-            st.markdown('<div class="card">', unsafe_allow_html=True)
             
-            st.markdown("### 🔐 Secure Login")
+            st.markdown("""### 🔐 Secure Login""")
             st.markdown("---")
             
             username = st.text_input("Username", placeholder="Enter your username", label_visibility="collapsed")
@@ -148,7 +156,6 @@ def render_login_page():
                     if "access_token" in result:
                         save_token(result["access_token"])
                         st.success("Welcome aboard! 🎉")
-                        time.sleep(0.5)
                         st.rerun()
                     else:
                         st.error(f"❌ {result.get('detail', 'Login failed')}")
@@ -167,25 +174,53 @@ def render_chat_interface():
     """Render a beautiful chat interface"""
     user_info = get_user_info()
     
-    # Sidebar
-    with st.sidebar:
-        st.markdown("""
-        <div style="text-align: center; padding: 1rem 0;">
-            <div style="font-size: 3rem;">👤</div>
-            <h3 style="margin: 0.5rem 0; color: #ffffff;">{}</h3>
-        </div>
-        """.format(user_info["username"]), unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        if st.button("Logout", use_container_width=True):
-            logout()
-            st.rerun()
+    if "page" not in st.session_state:
+        st.session_state.page = "chat"
+    # DIAGNOSTIC: Log user info to confirm role/department are available
+    print(f"DEBUG - User Info: {user_info}")
     
+
+    with st.sidebar:
+
+    # ---------- TOP: User Info ----------
+        top = st.container()
+        with top:
+            st.markdown("### 👤")
+            st.markdown(f"**{user_info['username'].upper()}**")
+            st.caption(user_info["role"].upper())
+            st.caption(user_info["department"].upper())
+            st.divider()
+
+            if is_admin_or_clevel(user_info):
+                st.markdown("### 🔐 Admin")
+
+                if st.button("➕ Add User", use_container_width=True):
+                    st.session_state.page = "add_user"
+
+                if st.button("👥 View Members", use_container_width=True):
+                    st.session_state.page = "view_users"
+                st.markdown("<div style='height: 15vh;'></div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div style='height: 35vh;'></div>", unsafe_allow_html=True)
+
+
+    # ---------- MIDDLE: Spacer / History ----------
+    
+
+
+    # ---------- BOTTOM: Logout ----------
+        bottom = st.container()
+        with bottom:
+            st.divider()
+            if st.button("🚪 Logout", use_container_width=True):
+                logout()
+                st.rerun()
+
     # Main chat area
-    st.markdown("""
+    if st.session_state.page == "chat":
+        st.markdown("""
     <div style="text-align: center; padding: 1rem 0;">
-        <h1 class="gradient-title">💬 Clara - Company AI Assistant</h1>
+        <h1 class="gradient-title">💬Company AI Assistant</h1>
         <p style="color: #94a3b8;">Ask me anything about company policies, procedures, and documentation</p>
     </div>
     """, unsafe_allow_html=True)
@@ -196,61 +231,109 @@ def render_chat_interface():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-    # Display chat messages
-    for idx, message in enumerate(st.session_state.messages):
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        # Display chat messages
+        for idx, message in enumerate(st.session_state.messages):
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
             
-            if message["role"] == "assistant" and "sources" in message and message["sources"]:
-                st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
-                for source in message["sources"]:
-                    st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+                if message["role"] == "assistant" and "sources" in message and message["sources"]:
+                    st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+                    for source in message["sources"]:
+                        st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
     
-    # Chat input
-    if prompt := st.chat_input("Ask me anything, always ready to help"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        # Chat input
+        if prompt := st.chat_input("Ask me anything, always ready to help"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
         
-        with st.chat_message("assistant"):
-            with st.spinner("🤔 Clara is thinking..."):
-                token = get_token()
-                try:
-                    response = requests.post(
-                        f"{BACKEND_URL}/chat",
-                        headers={
+            with st.chat_message("assistant"):
+                with st.spinner("🤔 Thinking..."):
+                    token = get_token()
+                    try:
+                        response = requests.post(
+                            f"{BACKEND_URL}/chat",
+                            headers={
                             "Content-Type": "application/json",
                             "Authorization": f"Bearer {token}"
-                        },
-                        json={"query": prompt},
-                        timeout=300
-                    )
+                            },
+                            json={"query": prompt},
+                            timeout=300
+                        )
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        answer = data.get("answer", "I couldn't find an answer to that question.")
-                        sources = data.get("sources", [])
+                        if response.status_code == 200:
+                            data = response.json()
+                            answer = data.get("answer", "I couldn't find an answer to that question.")
+                            sources = data.get("sources", [])
                         
-                        st.markdown(answer)
+                            st.markdown(answer)
                         
-                        if sources:
-                            st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
-                            for source in sources:
-                                st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
-                            st.markdown("</div>", unsafe_allow_html=True)
+                            if sources:
+                                st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+                                for source in sources:
+                                    st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
+                                st.markdown("</div>", unsafe_allow_html=True)
                         
-                        st.session_state.messages.append({
+                            st.session_state.messages.append({
                             "role": "assistant",
                             "content": answer,
                             "sources": sources
-                        })
-                    else:
-                        error_msg = response.json().get("detail", "Unknown error")
-                        st.error(f"❌ {error_msg}")
+                            })
+                        else:
+                            error_msg = response.json().get("detail", "Unknown error")
+                            st.error(f"❌ {error_msg}")
                         
-                except Exception as e:
-                    st.error(f"🚨 Connection error: {str(e)}")
+                    except Exception as e:
+                        st.error(f"🚨 Connection error: {str(e)}")
+    elif st.session_state.page == "add_user":
+        st.title("➕ Add New User")
+        with st.form("add_user_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Temporary Password", type="password")
+
+            role = st.selectbox(
+            "Role",
+            ["engineer", "analyst", "manager", "admin", "c_level"]
+            )
+
+            department = st.selectbox(
+            "Department",
+            ["Engineering", "Marketing", "Finance", "HR", "Operations"]
+            )
+
+            col1, col2 = st.columns(2)
+            submit = col1.form_submit_button("Create User")
+            cancel = col2.form_submit_button("Cancel")
+
+            if submit:
+                if not username or not password:
+                    st.error("All fields are required")
+                else:
+                    ok, err = create_user(username, password, role, department)
+                    if ok:
+                        st.success("User created successfully")
+                        st.session_state.page = "chat"
+                        st.rerun()
+                    else:
+                        st.error(err)
+
+            if cancel:
+                st.session_state.page = "chat"
+                st.rerun()
+    elif st.session_state.page == "view_users":
+        st.title("👥 Team Members")
+
+        users = get_all_users()
+
+        if not users:
+            st.info("No users added yet")
+        else:
+            st.table(users)
+
+        if st.button("⬅ Back"):
+            st.session_state.page = "chat"
+            st.rerun()
 
 # Main app flow
 if not is_authenticated():
