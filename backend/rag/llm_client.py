@@ -1,27 +1,26 @@
-import os
+# backend/rag/llm_client.py
+
 import requests
 from typing import List
-from dotenv import load_dotenv
-
-# Load Environment Variables
-ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-load_dotenv(ENV_PATH)
-
-# Ollama settings (loaded from .env with defaults)
-USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
+from backend.rag.prompts import build_prompt
 
 # -------------------------------------------------
-# LLM Generation Function - Ollama Only
+# Ollama Configuration
+# -------------------------------------------------
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "llama3"   # you already pulled this
+
+# -------------------------------------------------
+# LLM Call (Ollama)
 # -------------------------------------------------
 def generate_answer(
     context_chunks: List[str],
     user_question: str,
-    timeout: int = 300
+    timeout: int = 120
 ) -> str:
     """
-    Sends context + question to Ollama local model.
+    Sends context + question to Ollama LLM
+    and returns generated answer.
     """
     
     # Check if Ollama is enabled
@@ -44,49 +43,32 @@ Context:
 Question:
 {user_question}
 
-Answer:"""
+    # Keep context short (good practice)
+    context = "\n".join(context_chunks[:3])
+    prompt = build_prompt([context], user_question)
 
-    return generate_ollama(prompt, timeout)
-
-
-def generate_ollama(prompt: str, timeout: int = 180) -> str:
-    """Generate answer using Ollama local model."""
-    
-    ollama_payload = {
+    payload = {
         "model": OLLAMA_MODEL,
         "prompt": prompt,
-        "stream": False,
-        "options": {
-            "num_predict": 2048,  # Increased from 200 to prevent response truncation
-            "temperature": 0.1
-        }
+        "stream": False
     }
     
     try:
         response = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json=ollama_payload,
+            OLLAMA_URL,
+            json=payload,
             timeout=timeout
         )
-        
-        print(f"DEBUG: Ollama Response Status: {response.status_code}")
-        print(f"DEBUG: Ollama Response Text: {response.text[:200]}...")
-        
-        if response.status_code == 200:
-            result = response.json()
-            generated_text = result.get("response", "").strip()
-            print(f"DEBUG: Ollama generated: {generated_text[:100]}...")
-            return generated_text
-        else:
-            error_msg = f"Ollama API failed with status {response.status_code}"
-            print(f"DEBUG: {error_msg}: {response.text[:200]}")
-            return error_msg
-            
-    except requests.exceptions.ConnectionError as e:
-        error_msg = f"Ollama connection failed. Make sure Ollama is running: ollama run {OLLAMA_MODEL}"
-        print(f"DEBUG: {error_msg}: {e}")
-        return error_msg
-    except Exception as e:
-        error_msg = f"Ollama error: {str(e)}"
-        print(f"DEBUG: {error_msg}")
-        return error_msg
+
+        if response.status_code != 200:
+            return f"LLM Error: API failed (status {response.status_code})"
+
+        result = response.json()
+
+        return result.get("response", "").strip() or "LLM Error: Empty response."
+
+    except requests.exceptions.Timeout:
+        return "LLM Error: Request timed out."
+
+    except requests.exceptions.RequestException as e:
+        return f"LLM Error: {str(e)}"
