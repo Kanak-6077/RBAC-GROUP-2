@@ -6,6 +6,7 @@ import os
 
 from backend.models import User
 from backend.database import get_connection, create_user_table
+from backend.seed_users import seed_all_users
 from backend.auth.auth_handler import hash_password
 from backend.auth.auth_bearer import get_current_user
 from backend.auth.login import router as login_router
@@ -31,44 +32,9 @@ app.add_middleware(
 # Auth routes
 app.include_router(login_router)
 
-# Initialize database
+# Initialize database and seed users
 create_user_table()
-
-
-def ensure_test_user():
-    """
-    Create default admin user for runtime only.
-    Skipped during pytest to avoid bcrypt initialization at import time.
-    """
-    if os.getenv("PYTEST_RUNNING") == "1":
-        return
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT 1 FROM users WHERE username = ?",
-        ("admin",),
-    )
-
-    cursor.execute(
-        """
-        INSERT OR REPLACE INTO users (username, password, role, department)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            "admin",
-            hash_password("admin123"),
-            "C-Level",
-            "General",
-        ),
-    )
-
-    conn.close()
-
-
-# Safe to call (no effect during tests)
-ensure_test_user()
+seed_all_users()
 
 
 @app.get("/")
@@ -136,7 +102,7 @@ async def chat(request: ChatRequest, current_user=Depends(get_current_user)):
         )
 
     try:
-        search_results = semantic_search(request.query)
+        search_results = semantic_search(request.query, top_k=10)
     except Exception as e:
         raise HTTPException(
             status_code=500,

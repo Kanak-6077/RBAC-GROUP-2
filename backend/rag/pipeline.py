@@ -28,8 +28,8 @@ def run_rag_pipeline(user: Dict, query: str, search_results: List[Dict]) -> Dict
         # Get fields directly (not nested under 'metadata')
         department = item.get("department", "")
         
-        # C-Level gets EVERYTHING
-        if user.get("role") == "C-Level":
+        # C-Level and admin get EVERYTHING
+        if user.get("role") in ["C-Level", "admin"]:
             allowed_chunks.append(item)
         
         # Others match department OR see "General" files

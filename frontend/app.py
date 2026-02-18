@@ -151,8 +151,9 @@ def render_login_page():
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("🚀 Sign In", use_container_width=True, type="primary"):
-                if username and password:
-                    result = login(username, password)
+                username_clean = username.strip()
+                if username_clean and password:
+                    result = login(username_clean, password)
                     if "access_token" in result:
                         save_token(result["access_token"])
                         st.success("Welcome aboard! 🎉")
@@ -185,10 +186,21 @@ def render_chat_interface():
     # ---------- TOP: User Info ----------
         top = st.container()
         with top:
-            st.markdown("### 👤")
-            st.markdown(f"**{user_info['username'].upper()}**")
-            st.caption(user_info["role"].upper())
-            st.caption(user_info["department"].upper())
+            st.markdown(f"""
+            <div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%); border-radius: 15px; margin-bottom: 1rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">👤</div>
+                <div style="color: #ffffff; font-size: 2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                    {user_info['username']}
+                </div>
+                <div style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin-top: 0.75rem;">
+                    Role: {user_info['role']}
+                </div>
+                <div style="color: #ffffff; font-size: 1.1rem; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 2px;">
+                    Department: {user_info['department']}
+                </div>
+            </div>
+            <div style="height: 1rem;"></div>
+            """, unsafe_allow_html=True)
             st.divider()
 
             if is_admin_or_clevel(user_info):
@@ -231,61 +243,61 @@ def render_chat_interface():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-        # Display chat messages
-        for idx, message in enumerate(st.session_state.messages):
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    # Display chat messages
+    for idx, message in enumerate(st.session_state.messages):
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
             
-                if message["role"] == "assistant" and "sources" in message and message["sources"]:
-                    st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
-                    for source in message["sources"]:
-                        st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
+            if message["role"] == "assistant" and "sources" in message and message["sources"]:
+                st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+                for source in message["sources"]:
+                    st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
     
-        # Chat input
-        if prompt := st.chat_input("Ask me anything, always ready to help"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+    # Chat input
+    if prompt := st.chat_input("Ask me anything, always ready to help"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
         
-            with st.chat_message("assistant"):
-                with st.spinner("🤔 Thinking..."):
-                    token = get_token()
-                    try:
-                        response = requests.post(
-                            f"{BACKEND_URL}/chat",
-                            headers={
-                            "Content-Type": "application/json",
-                            "Authorization": f"Bearer {token}"
-                            },
-                            json={"query": prompt},
-                            timeout=300
-                        )
+        with st.chat_message("assistant"):
+            with st.spinner("🤔 Thinking..."):
+                token = get_token()
+                try:
+                    response = requests.post(
+                        f"{BACKEND_URL}/chat",
+                        headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {token}"
+                        },
+                        json={"query": prompt},
+                        timeout=300
+                    )
+                
+                    if response.status_code == 200:
+                        data = response.json()
+                        answer = data.get("answer", "I couldn't find an answer to that question.")
+                        sources = data.get("sources", [])
                     
-                        if response.status_code == 200:
-                            data = response.json()
-                            answer = data.get("answer", "I couldn't find an answer to that question.")
-                            sources = data.get("sources", [])
-                        
-                            st.markdown(answer)
-                        
-                            if sources:
-                                st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
-                                for source in sources:
-                                    st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
-                                st.markdown("</div>", unsafe_allow_html=True)
-                        
-                            st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": answer,
-                            "sources": sources
-                            })
-                        else:
-                            error_msg = response.json().get("detail", "Unknown error")
-                            st.error(f"❌ {error_msg}")
-                        
-                    except Exception as e:
-                        st.error(f"🚨 Connection error: {str(e)}")
+                        st.markdown(answer)
+                    
+                        if sources:
+                            st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+                            for source in sources:
+                                st.markdown(f'<span class="source-chip">📄 {source}</span>', unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                    
+                        st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": answer,
+                        "sources": sources
+                        })
+                    else:
+                        error_msg = response.json().get("detail", "Unknown error")
+                        st.error(f"❌ {error_msg}")
+                    
+                except Exception as e:
+                    st.error(f"🚨 Connection error: {str(e)}")
     elif st.session_state.page == "add_user":
         st.title("➕ Add New User")
         with st.form("add_user_form"):

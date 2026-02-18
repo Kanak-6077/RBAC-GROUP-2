@@ -1,8 +1,10 @@
 import chromadb
+import os
 from sentence_transformers import SentenceTransformer
 
-# CONFIG
-CHROMA_PATH = "output/vector_db/chroma"
+# CONFIG - Use absolute path
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CHROMA_PATH = os.path.join(BASE_DIR, "output/vector_db/chroma")
 COLLECTION_NAME = "rbac_chunks"
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 

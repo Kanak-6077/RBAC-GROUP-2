@@ -32,8 +32,8 @@ def generate_answer(
     if not context_chunks:
         return "No context provided to generate an answer."
     
-    # Take only the first chunk and truncate it
-    context_text = context_chunks[0][:500] if context_chunks else ""
+    # Use up to 6 chunks with 1500 chars each for better diversity
+    context_text = "\n\n".join([chunk[:1500] for chunk in context_chunks[:6]])
     
     # Simple Prompt
     prompt = f"""You are a helpful assistant. Answer the question based ONLY on the context below.

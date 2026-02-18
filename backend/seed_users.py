@@ -30,8 +30,8 @@ def seed_all_users():
         {
             "username": "ritika",
             "password": "ritika123",
-            "role": "admin",
-            "department": "finance"
+            "role": "Finance",
+            "department": "Finance"
         },
         {
             "username": "keerthi",

@@ -45,7 +45,7 @@ async def enforce_rbac(request: Request, action: str, dept_requested: str = None
     role = payload.get("role")
     department = payload.get("department")
 
-    if role == "C-Level":
+    if role == "C-Level" or role == "admin":
         log_access(username, role, query, "ALLOWED")
         return payload
 
