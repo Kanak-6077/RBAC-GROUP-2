@@ -1,5 +1,14 @@
+# Backend dependencies
 fastapi
-streamlit
-langchain
+uvicorn
+pydantic
+python-dotenv
+requests
+chromadb
 sentence-transformers
+passlib
+python-jose
 pandas
+
+# Frontend dependencies
+streamlit

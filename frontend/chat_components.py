@@ -1,8 +1,30 @@
 import streamlit as st
 from frontend.api_client import send_chat_query
+import sys
+import os
+
+# Use relative import to avoid ModuleNotFoundError
+try:
+    from .api_client import send_chat_query
+except ImportError:
+    try:
+        from api_client import send_chat_query
+    except ImportError as e:
+        print(f"DIAGNOSTIC ERROR: Both import methods failed: {e}")
+        # Define a fallback function to prevent NameError
+        def send_chat_query(query_text):
+            return {"answer": "Import error - please restart the app"}
+
+# Import auth utilities for authentication check
+from .auth_utils import is_authenticated
 
 def render_chat():
     st.title("Company Knowledge Chat")
+
+    # Check authentication before proceeding
+    if not is_authenticated():
+        st.error("Please log in to use the chat.")
+        st.stop()
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []

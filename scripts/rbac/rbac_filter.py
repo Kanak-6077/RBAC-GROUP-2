@@ -16,14 +16,9 @@ def filter_chunks_by_rbac(search_results: list, user_role: str, user_department:
 
     for chunk in search_results:
         chunk_department = chunk.get("department")
-        allowed_roles = chunk.get("allowed_roles", [])
 
-        # Department check
-        if chunk_department != user_department and user_role != "C-Level":
-            continue
-
-        # Role check
-        if not is_role_allowed(user_role, allowed_roles):
+        # Department check - C-Level and admin can access all departments
+        if chunk_department != user_department and user_role not in ["C-Level", "admin"]:
             continue
 
         authorized_results.append(chunk)

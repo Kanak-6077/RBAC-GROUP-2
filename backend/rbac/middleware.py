@@ -3,7 +3,7 @@ import jwt
 from datetime import datetime
 from fastapi import Request, HTTPException, status
 
-SECRET_KEY = "supersecretkey"
+SECRET_KEY = "ce3mc4ejwrn4vi534932c42394"
 ALGORITHM = "HS256"
 
 LOG_DIR = "backend/logs"
@@ -45,7 +45,7 @@ async def enforce_rbac(request: Request, action: str, dept_requested: str = None
     role = payload.get("role")
     department = payload.get("department")
 
-    if role == "C-Level":
+    if role == "C-Level" or role == "admin":
         log_access(username, role, query, "ALLOWED")
         return payload
 

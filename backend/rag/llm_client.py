@@ -22,6 +22,26 @@ def generate_answer(
     Sends context + question to Ollama LLM
     and returns generated answer.
     """
+    
+    # Check if Ollama is enabled
+    if not USE_OLLAMA:
+        return "LLM Error: Ollama is disabled. Set USE_OLLAMA=true in .env"
+    
+    # Prepare the context (Limit to 1 chunk, max 500 chars)
+    if not context_chunks:
+        return "No context provided to generate an answer."
+    
+    # Use up to 6 chunks with 1500 chars each for better diversity
+    context_text = "\n\n".join([chunk[:1500] for chunk in context_chunks[:6]])
+    
+    # Simple Prompt
+    prompt = f"""You are a helpful assistant. Answer the question based ONLY on the context below.
+
+Context:
+{context_text}
+
+Question:
+{user_question}
 
     # Keep context short (good practice)
     context = "\n".join(context_chunks[:3])
@@ -32,7 +52,7 @@ def generate_answer(
         "prompt": prompt,
         "stream": False
     }
-
+    
     try:
         response = requests.post(
             OLLAMA_URL,

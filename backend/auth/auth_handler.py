@@ -33,19 +33,24 @@ def authenticate_user(username: str, password: str) -> dict | None:
     conn = get_connection()
     cursor = conn.cursor()
 
+    print(f"[DEBUG] Searching for user: '{username}'")
     cursor.execute(
         "SELECT username, password, role, department FROM users WHERE username = ?",
         (username,),
     )
     row = cursor.fetchone()
+    print(f"[DEBUG] Database query result: {row}")
     conn.close()
 
     if not row:
+        print(f"[DEBUG] User '{username}' not found in database")
         return None
-
+    
     db_username, db_password, role, department = row
+    print(f"[DEBUG] Found user: '{db_username}', verifying password...")
 
     if not verify_password(password, db_password):
+        print(f"[DEBUG] Password verification failed for user '{username}'")
         return None
 
     return {
